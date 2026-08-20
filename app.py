@@ -110,25 +110,23 @@ st.markdown(
     .header-badge {{display:flex; align-items:center; gap:.45rem; color:var(--pine-800); font-size:.76rem; font-weight:700;}}
     .live-dot {{width:8px; height:8px; border-radius:50%; background:var(--leaf); box-shadow:0 0 0 4px rgba(78,155,88,.13);}}
 
-    .hero-shell {{height:270px; border-radius:22px; overflow:hidden; position:relative; display:flex; align-items:center;
+    .hero-shell {{min-height:350px; border-radius:22px; overflow:hidden; position:relative; display:flex; align-items:center;
       background-image:linear-gradient(90deg,rgba(5,43,33,.98) 0%,rgba(5,43,33,.92) 38%,rgba(5,43,33,.38) 65%,rgba(5,43,33,.04) 100%),url("data:image/webp;base64,{hero_data}");
       background-size:cover; background-position:center 46%; box-shadow:0 14px 38px rgba(12,53,40,.12);}}
-    .hero-copy {{width:56%; padding:2.2rem 2.4rem; color:white; position:relative; z-index:1;}}
+    .hero-copy {{width:52%; padding:2.6rem 2.7rem; color:white; position:relative; z-index:1;}}
     .hero-eyebrow {{display:flex; align-items:center; gap:.5rem; color:#cde6bf; font-size:.7rem; font-weight:800; letter-spacing:.13em; text-transform:uppercase;}}
     .hero-eyebrow svg {{width:16px; height:16px; stroke:#9bd168;}}
-    .hero-copy h1 {{font-size:clamp(2.2rem,4.6vw,3.25rem); line-height:1.01; margin:.65rem 0 .65rem; color:white; max-width:520px;}}
+    .hero-copy h1 {{font-size:clamp(2.15rem,4vw,3rem); line-height:1.04; margin:.72rem 0 .8rem; color:white; max-width:480px;}}
     .hero-copy p {{max-width:500px; margin:0; color:rgba(255,255,255,.86); font-size:.98rem;}}
-    .hero-proof {{display:flex; gap:.6rem; flex-wrap:wrap; margin-top:1.1rem;}}
-    .proof-pill {{padding:.34rem .62rem; border-radius:999px; color:#dce9e3; background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.14); font-size:.69rem; font-weight:700;}}
 
-    .st-key-site_nav {{margin:.85rem 0 0; padding:.42rem; background:rgba(255,255,255,.92); border:1px solid var(--line); border-radius:17px; box-shadow:0 9px 26px rgba(13,53,41,.07); position:relative; z-index:30; backdrop-filter:blur(12px);}}
-    .st-key-site_nav [data-testid="stHorizontalBlock"] {{gap:.42rem;}}
-    .st-key-site_nav .stButton > button {{min-height:3.15rem; border:0; border-radius:12px; box-shadow:none; font-size:.82rem; letter-spacing:.005em; transition:background .18s ease,color .18s ease,transform .18s ease,box-shadow .18s ease;}}
+    .st-key-site_nav {{max-width:520px; margin:1rem auto 0; padding:.25rem; background:transparent; border:0; position:relative; z-index:30;}}
+    .st-key-site_nav [data-testid="stHorizontalBlock"] {{gap:.3rem;}}
+    .st-key-site_nav .stButton > button {{min-height:2.65rem; border:0; border-radius:999px; box-shadow:none; font-size:.78rem; letter-spacing:.005em; transition:background .18s ease,color .18s ease,transform .18s ease,box-shadow .18s ease;}}
     .st-key-site_nav .stButton > button p {{font-weight:780;}}
-    .st-key-site_nav .stButton > button svg {{width:1.15rem; height:1.15rem;}}
+    .st-key-site_nav .stButton > button svg {{display:none;}}
     .st-key-site_nav .stButton > button[kind="tertiary"] {{background:transparent; color:#566a60;}}
     .st-key-site_nav .stButton > button[kind="tertiary"]:hover {{background:#edf4ed; color:var(--pine-900); transform:translateY(-1px);}}
-    .st-key-site_nav .stButton > button[kind="primary"] {{background:linear-gradient(135deg,var(--pine-900),var(--pine-800)); color:white; box-shadow:0 7px 17px rgba(11,59,46,.2);}}
+    .st-key-site_nav .stButton > button[kind="primary"] {{background:#e3eee5; color:var(--pine-900); box-shadow:inset 0 0 0 1px #cadbce;}}
 
     .section-head {{margin:2.25rem 0 1rem;}}
     .section-kicker {{display:flex; align-items:center; gap:.45rem; color:var(--leaf); font-size:.69rem; font-weight:850; letter-spacing:.13em; text-transform:uppercase; margin-bottom:.35rem;}}
@@ -203,9 +201,9 @@ st.markdown(
 
     @media (max-width:900px) and (min-width:701px) {{
       .block-container {{padding-left:1rem; padding-right:1rem;}}
-      .hero-shell {{height:255px; background-position:58% center;}}
-      .hero-copy {{width:64%; padding:1.8rem;}}
-      .hero-copy h1 {{font-size:2.65rem;}}
+      .hero-shell {{min-height:330px; background-position:58% center;}}
+      .hero-copy {{width:60%; padding:2rem;}}
+      .hero-copy h1 {{font-size:2.45rem;}}
       .species-row {{grid-template-columns:1.9rem 1fr auto;}}
       .species-order {{display:none;}}
     }}
@@ -213,14 +211,15 @@ st.markdown(
     @media (max-width:700px) {{
       .block-container {{padding:0 .8rem 5.7rem;}}
       .site-header {{height:62px;}} .site-brand img {{width:36px;height:36px;}} .brand-sub,.header-badge {{display:none;}}
-      .hero-shell {{height:295px; align-items:flex-end; border-radius:18px; background-position:61% center;
+      .hero-shell {{min-height:310px; align-items:flex-end; border-radius:18px; background-position:61% center;
         background-image:linear-gradient(0deg,rgba(5,43,33,.98) 0%,rgba(5,43,33,.83) 45%,rgba(5,43,33,.06) 78%),url("data:image/webp;base64,{hero_data}");}}
       .hero-copy {{width:100%; padding:1.15rem;}} .hero-copy h1 {{font-size:2rem; max-width:330px;}} .hero-copy p {{font-size:.8rem; max-width:330px; line-height:1.45;}}
-      .hero-proof {{margin-top:.8rem;}} .proof-pill {{font-size:.61rem;}}
-      .st-key-site_nav {{position:fixed; left:.7rem; right:.7rem; bottom:.65rem; z-index:9999; margin:0; padding:.3rem; box-shadow:0 12px 34px rgba(7,44,34,.22); border-color:#cfdcd3;}}
+      .st-key-site_nav {{max-width:none; position:fixed; left:.7rem; right:.7rem; bottom:.65rem; z-index:9999; margin:0; padding:.3rem; background:rgba(255,255,255,.96); border:1px solid #cfdcd3; border-radius:17px; box-shadow:0 12px 34px rgba(7,44,34,.22); backdrop-filter:blur(14px);}}
       .st-key-site_nav [data-testid="stHorizontalBlock"] {{flex-direction:row !important; gap:.2rem !important;}}
       .st-key-site_nav [data-testid="column"] {{width:auto !important; flex:1 1 0 !important; min-width:0 !important;}}
       .st-key-site_nav .stButton > button {{min-height:3.2rem; padding:.35rem .25rem; font-size:.72rem;}}
+      .st-key-site_nav .stButton > button svg {{display:block; width:1.05rem; height:1.05rem;}}
+      .st-key-site_nav .stButton > button[kind="primary"] {{background:var(--pine-900); color:white; box-shadow:none;}}
       .section-head {{margin:1.75rem 0 .85rem;}} .section-head h2 {{font-size:1.85rem;}}
       .tip-grid,.eco-grid,.species-list {{grid-template-columns:1fr;}}
       [data-testid="stHorizontalBlock"] {{flex-direction:column; gap:.45rem;}}
@@ -230,12 +229,10 @@ st.markdown(
     }}
     @media (max-width:420px) {{
       .block-container {{padding-left:.65rem; padding-right:.65rem;}}
-      .hero-shell {{height:272px; border-radius:16px;}}
+      .hero-shell {{min-height:290px; border-radius:16px;}}
       .hero-copy {{padding:1.05rem;}}
       .hero-copy h1 {{font-size:1.82rem;}}
       .hero-copy p {{font-size:.75rem; line-height:1.4;}}
-      .proof-pill {{padding:.28rem .45rem;}}
-      .proof-pill:nth-child(3) {{display:none;}}
       .st-key-site_nav {{left:.45rem; right:.45rem; bottom:.45rem;}}
       .st-key-site_nav .stButton > button {{font-size:.66rem; min-height:3rem;}}
       .upload-shell {{grid-template-columns:1fr; gap:.5rem;}}
@@ -243,9 +240,8 @@ st.markdown(
       .site-footer {{align-items:flex-start;}}
     }}
     @media (max-height:560px) and (orientation:landscape) {{
-      .hero-shell {{height:230px;}}
+      .hero-shell {{min-height:245px;}}
       .hero-copy h1 {{font-size:2.15rem;}}
-      .hero-proof {{display:none;}}
     }}
     </style>
     <header class="site-header">
@@ -263,7 +259,6 @@ st.markdown(
         </div>
         <h1>Know the bird.<br>Care for its habitat.</h1>
         <p>Upload one photograph for a first clue, then explore 85 birds and the living landscapes around them.</p>
-        <div class="hero-proof"><span class="proof-pill">85 selected species</span><span class="proof-pill">Responsible identification</span><span class="proof-pill">Visible model attention</span></div>
       </div>
     </section>
     """,

@@ -24,7 +24,7 @@ LOGO_PATH = APP_DIR / "assets" / "nepal-bird-mark.svg"
 
 st.set_page_config(
     page_title="Nepal Bird ID — Identify birds of Nepal",
-    page_icon=str(LOGO_PATH),
+    page_icon="🐦",
     layout="centered",
     initial_sidebar_state="collapsed",
 )
@@ -51,6 +51,10 @@ def clear_identification():
     st.session_state.gradcam_images = None
 
 
+def navigate(section):
+    st.session_state.site_page = section
+
+
 def footer():
     st.markdown(
         """
@@ -69,6 +73,7 @@ for key, default in {
     "prediction_results": None,
     "gradcam_key": None,
     "gradcam_images": None,
+    "site_page": "Identify",
 }.items():
     if key not in st.session_state:
         st.session_state[key] = default
@@ -88,10 +93,12 @@ st.markdown(
       --warning:#a65c1b;
     }}
     .stApp {{background:var(--canvas); color:var(--ink);}}
+    .stApp * {{scroll-behavior:smooth;}}
     .block-container {{max-width:1040px; padding:0 1.15rem 4rem;}}
     header[data-testid="stHeader"] {{height:0; background:transparent;}}
     #MainMenu, footer, [data-testid="stToolbar"], [data-testid="stDecoration"],
-    [data-testid="stStatusWidget"], [data-testid="stSidebarCollapsedControl"] {{display:none !important;}}
+    [data-testid="stStatusWidget"], [data-testid="stSidebarCollapsedControl"],
+    [data-testid="stLogo"], img[alt="streamlitApp"] {{display:none !important;}}
     h1,h2,h3 {{color:var(--ink); letter-spacing:-.035em;}}
     p {{line-height:1.58;}}
 
@@ -103,21 +110,25 @@ st.markdown(
     .header-badge {{display:flex; align-items:center; gap:.45rem; color:var(--pine-800); font-size:.76rem; font-weight:700;}}
     .live-dot {{width:8px; height:8px; border-radius:50%; background:var(--leaf); box-shadow:0 0 0 4px rgba(78,155,88,.13);}}
 
-    .hero-shell {{height:310px; border-radius:24px; overflow:hidden; position:relative; display:flex; align-items:center;
+    .hero-shell {{height:270px; border-radius:22px; overflow:hidden; position:relative; display:flex; align-items:center;
       background-image:linear-gradient(90deg,rgba(5,43,33,.98) 0%,rgba(5,43,33,.92) 38%,rgba(5,43,33,.38) 65%,rgba(5,43,33,.04) 100%),url("data:image/webp;base64,{hero_data}");
       background-size:cover; background-position:center 46%; box-shadow:0 14px 38px rgba(12,53,40,.12);}}
     .hero-copy {{width:56%; padding:2.2rem 2.4rem; color:white; position:relative; z-index:1;}}
     .hero-eyebrow {{display:flex; align-items:center; gap:.5rem; color:#cde6bf; font-size:.7rem; font-weight:800; letter-spacing:.13em; text-transform:uppercase;}}
     .hero-eyebrow svg {{width:16px; height:16px; stroke:#9bd168;}}
-    .hero-copy h1 {{font-size:clamp(2.45rem,5.4vw,4rem); line-height:.98; margin:.75rem 0 .75rem; color:white; max-width:520px;}}
+    .hero-copy h1 {{font-size:clamp(2.2rem,4.6vw,3.25rem); line-height:1.01; margin:.65rem 0 .65rem; color:white; max-width:520px;}}
     .hero-copy p {{max-width:500px; margin:0; color:rgba(255,255,255,.86); font-size:.98rem;}}
     .hero-proof {{display:flex; gap:.6rem; flex-wrap:wrap; margin-top:1.1rem;}}
     .proof-pill {{padding:.34rem .62rem; border-radius:999px; color:#dce9e3; background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.14); font-size:.69rem; font-weight:700;}}
 
-    [data-testid="stSegmentedControl"] {{margin:.7rem 0 0; position:relative; z-index:20;}}
-    [data-testid="stSegmentedControl"] > div {{width:100%; justify-content:center; background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:.25rem; box-shadow:0 5px 20px rgba(13,53,41,.05);}}
-    [data-testid="stSegmentedControl"] button {{flex:1; border:0 !important; border-radius:10px !important; min-height:2.7rem; font-size:.82rem; font-weight:780; color:#52665d;}}
-    [data-testid="stSegmentedControl"] button[aria-pressed="true"] {{background:var(--pine-900) !important; color:white !important;}}
+    .st-key-site_nav {{margin:.85rem 0 0; padding:.42rem; background:rgba(255,255,255,.92); border:1px solid var(--line); border-radius:17px; box-shadow:0 9px 26px rgba(13,53,41,.07); position:relative; z-index:30; backdrop-filter:blur(12px);}}
+    .st-key-site_nav [data-testid="stHorizontalBlock"] {{gap:.42rem;}}
+    .st-key-site_nav .stButton > button {{min-height:3.15rem; border:0; border-radius:12px; box-shadow:none; font-size:.82rem; letter-spacing:.005em; transition:background .18s ease,color .18s ease,transform .18s ease,box-shadow .18s ease;}}
+    .st-key-site_nav .stButton > button p {{font-weight:780;}}
+    .st-key-site_nav .stButton > button svg {{width:1.15rem; height:1.15rem;}}
+    .st-key-site_nav .stButton > button[kind="tertiary"] {{background:transparent; color:#566a60;}}
+    .st-key-site_nav .stButton > button[kind="tertiary"]:hover {{background:#edf4ed; color:var(--pine-900); transform:translateY(-1px);}}
+    .st-key-site_nav .stButton > button[kind="primary"] {{background:linear-gradient(135deg,var(--pine-900),var(--pine-800)); color:white; box-shadow:0 7px 17px rgba(11,59,46,.2);}}
 
     .section-head {{margin:2.25rem 0 1rem;}}
     .section-kicker {{display:flex; align-items:center; gap:.45rem; color:var(--leaf); font-size:.69rem; font-weight:850; letter-spacing:.13em; text-transform:uppercase; margin-bottom:.35rem;}}
@@ -192,9 +203,9 @@ st.markdown(
 
     @media (max-width:900px) and (min-width:701px) {{
       .block-container {{padding-left:1rem; padding-right:1rem;}}
-      .hero-shell {{height:290px; background-position:58% center;}}
+      .hero-shell {{height:255px; background-position:58% center;}}
       .hero-copy {{width:64%; padding:1.8rem;}}
-      .hero-copy h1 {{font-size:3rem;}}
+      .hero-copy h1 {{font-size:2.65rem;}}
       .species-row {{grid-template-columns:1.9rem 1fr auto;}}
       .species-order {{display:none;}}
     }}
@@ -202,12 +213,14 @@ st.markdown(
     @media (max-width:700px) {{
       .block-container {{padding:0 .8rem 5.7rem;}}
       .site-header {{height:62px;}} .site-brand img {{width:36px;height:36px;}} .brand-sub,.header-badge {{display:none;}}
-      .hero-shell {{height:365px; align-items:flex-end; border-radius:18px; background-position:61% center;
+      .hero-shell {{height:295px; align-items:flex-end; border-radius:18px; background-position:61% center;
         background-image:linear-gradient(0deg,rgba(5,43,33,.98) 0%,rgba(5,43,33,.83) 45%,rgba(5,43,33,.06) 78%),url("data:image/webp;base64,{hero_data}");}}
-      .hero-copy {{width:100%; padding:1.35rem;}} .hero-copy h1 {{font-size:2.45rem; max-width:340px;}} .hero-copy p {{font-size:.86rem; max-width:330px;}}
+      .hero-copy {{width:100%; padding:1.15rem;}} .hero-copy h1 {{font-size:2rem; max-width:330px;}} .hero-copy p {{font-size:.8rem; max-width:330px; line-height:1.45;}}
       .hero-proof {{margin-top:.8rem;}} .proof-pill {{font-size:.61rem;}}
-      [data-testid="stSegmentedControl"] {{position:fixed; left:.7rem; right:.7rem; bottom:.65rem; z-index:9999; margin:0;}}
-      [data-testid="stSegmentedControl"] > div {{box-shadow:0 10px 32px rgba(7,44,34,.2); border-color:#cfdcd3;}}
+      .st-key-site_nav {{position:fixed; left:.7rem; right:.7rem; bottom:.65rem; z-index:9999; margin:0; padding:.3rem; box-shadow:0 12px 34px rgba(7,44,34,.22); border-color:#cfdcd3;}}
+      .st-key-site_nav [data-testid="stHorizontalBlock"] {{flex-direction:row !important; gap:.2rem !important;}}
+      .st-key-site_nav [data-testid="column"] {{width:auto !important; flex:1 1 0 !important; min-width:0 !important;}}
+      .st-key-site_nav .stButton > button {{min-height:3.2rem; padding:.35rem .25rem; font-size:.72rem;}}
       .section-head {{margin:1.75rem 0 .85rem;}} .section-head h2 {{font-size:1.85rem;}}
       .tip-grid,.eco-grid,.species-list {{grid-template-columns:1fr;}}
       [data-testid="stHorizontalBlock"] {{flex-direction:column; gap:.45rem;}}
@@ -217,14 +230,14 @@ st.markdown(
     }}
     @media (max-width:420px) {{
       .block-container {{padding-left:.65rem; padding-right:.65rem;}}
-      .hero-shell {{height:342px; border-radius:16px;}}
+      .hero-shell {{height:272px; border-radius:16px;}}
       .hero-copy {{padding:1.05rem;}}
-      .hero-copy h1 {{font-size:2.18rem;}}
-      .hero-copy p {{font-size:.8rem; line-height:1.45;}}
+      .hero-copy h1 {{font-size:1.82rem;}}
+      .hero-copy p {{font-size:.75rem; line-height:1.4;}}
       .proof-pill {{padding:.28rem .45rem;}}
       .proof-pill:nth-child(3) {{display:none;}}
-      [data-testid="stSegmentedControl"] {{left:.5rem; right:.5rem; bottom:.5rem;}}
-      [data-testid="stSegmentedControl"] button {{font-size:.75rem; min-height:2.85rem;}}
+      .st-key-site_nav {{left:.45rem; right:.45rem; bottom:.45rem;}}
+      .st-key-site_nav .stButton > button {{font-size:.66rem; min-height:3rem;}}
       .upload-shell {{grid-template-columns:1fr; gap:.5rem;}}
       .step-chip {{justify-self:start;}}
       .site-footer {{align-items:flex-start;}}
@@ -257,12 +270,26 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-page = st.segmented_control(
-    "Site section",
-    ["Identify", "Explore", "Mission"],
-    default="Identify",
-    label_visibility="collapsed",
-)
+with st.container(key="site_nav"):
+    nav_items = (
+        ("Identify", ":material/photo_camera:"),
+        ("Explore", ":material/menu_book:"),
+        ("Mission", ":material/eco:"),
+    )
+    nav_columns = st.columns(3, gap="small")
+    for column, (label, icon) in zip(nav_columns, nav_items):
+        with column:
+            st.button(
+                label,
+                icon=icon,
+                key=f"nav_{label.lower()}",
+                type="primary" if st.session_state.site_page == label else "tertiary",
+                on_click=navigate,
+                args=(label,),
+                use_container_width=True,
+            )
+
+page = st.session_state.site_page
 
 if page == "Explore":
     render_bird_guide()

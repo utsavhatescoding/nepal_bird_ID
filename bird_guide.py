@@ -79,7 +79,7 @@ def render_bird_guide():
     st.markdown(
         """
         <div class="section-head compact-head">
-          <div class="section-kicker">Learn · Notice · Care</div>
+          <div class="section-kicker">Explore the library</div>
           <h2>Meet the 85 birds</h2>
           <p>Explore the exact species known by this model, then follow the taxonomy to understand how they relate.</p>
         </div>
@@ -177,9 +177,9 @@ def render_bird_guide():
     st.markdown(
         """
         <div class="eco-grid">
-          <div class="eco-card"><div class="eco-icon">🌳</div><h3>Habitat signals</h3><p>Changes in bird communities can prompt closer attention to forests, farms, rivers and wetlands.</p></div>
-          <div class="eco-card"><div class="eco-icon">🧬</div><h3>Fine-grained diversity</h3><p>Closely related birds may differ through small field marks, calls, behaviour and range.</p></div>
-          <div class="eco-card"><div class="eco-icon">📝</div><h3>Observe responsibly</h3><p>Record place, date and behaviour; keep distance and avoid disturbing nests or feeding birds.</p></div>
+          <div class="eco-card"><div class="line-icon"><svg viewBox="0 0 24 24"><path d="M12 21V10M12 14c-5 0-8-3-8-8 5 0 8 3 8 8ZM12 11c4 0 7-2.5 7-7-4 0-7 2.5-7 7Z"/></svg></div><h3>Habitat signals</h3><p>Changes in bird communities can prompt closer attention to forests, farms, rivers and wetlands.</p></div>
+          <div class="eco-card"><div class="line-icon"><svg viewBox="0 0 24 24"><circle cx="8" cy="8" r="3"/><circle cx="16" cy="8" r="3"/><circle cx="12" cy="16" r="3"/><path d="M10 10.5 11 13M14 10.5 13 13"/></svg></div><h3>Fine-grained diversity</h3><p>Closely related birds may differ through small field marks, calls, behaviour and range.</p></div>
+          <div class="eco-card"><div class="line-icon"><svg viewBox="0 0 24 24"><path d="M5 4h14v16H5Z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg></div><h3>Observe responsibly</h3><p>Record place, date and behaviour; keep distance and avoid disturbing nests or feeding birds.</p></div>
         </div>
         """,
         unsafe_allow_html=True,

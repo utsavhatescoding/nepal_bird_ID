@@ -429,7 +429,7 @@ if page == "Mission":
         <div class="contributor-grid">
           {contributor_card('Prajwol Karki', 'MS Knowledge Engineering · IOE Pulchowk', 'PK', 'prajwol-karki')}
           {contributor_card('Utsav Phuyal', 'Master’s in Business and Economics · KUSOM', 'UP', 'utsav-phuyal')}
-          {contributor_card('Bibha SSS', 'Thesis Supervisor · IOE Pulchowk', 'BS', 'bibha-sss')}
+          {contributor_card('Bibha Sthapit', 'Assistant Professor · IOE Pulchowk', 'BS', 'bibha-sss')}
         </div>
 
         <div class="source-strip"><strong>Evidence and scope:</strong> Nepal-wide figures and threatened-status fields follow the supplied taxonomy report, which describes records through 2022. Ecological-service context is supported by <a href="https://www.birdlife.org/news/2019/01/04/why-we-need-birds-far-more-than-they-need-us/" target="_blank" rel="noopener">BirdLife International</a>. Predictions are educational suggestions, not conservation assessments.</div>

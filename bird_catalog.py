@@ -86,10 +86,28 @@ STATUS_NAMES = {
 ORDER_STORIES = {
     "Galliformes": ("Forest & ground birds", "Mostly strong-legged terrestrial birds such as pheasants and francolins."),
     "Anseriformes": ("Waterfowl", "Ducks and their relatives, closely connected to lakes, rivers and wetlands."),
+    "Podicipediformes": ("Diving waterbirds", "Grebes are compact swimmers with lobed toes, short wings and strong underwater movement."),
+    "Phoenicopteriformes": ("Flamingos", "Long-legged, web-footed waterbirds adapted to feeding in shallow saline or alkaline wetlands."),
+    "Pterocliformes": ("Sandgrouse", "Ground-dwelling birds whose cryptic plumage blends with open, dry and high-altitude landscapes."),
+    "Caprimulgiformes": ("Nightjars", "Mostly dusk- or night-active birds with cryptic plumage, long wings and a wide gape for catching insects."),
+    "Cuculiformes": ("Cuckoos", "Often long-tailed birds with curved bills; some species are better detected by voice than by sight."),
+    "Gaviiformes": ("Loons", "Streamlined diving birds with dagger-like bills and legs positioned far back for underwater propulsion."),
+    "Pelecaniformes": ("Herons & allies", "Water-associated birds that include stealthy, long-billed hunters of wetlands and river margins."),
+    "Suliformes": ("Cormorants & allies", "Dark, streamlined fish-eaters that pursue prey underwater and often rest with wings spread."),
+    "Columbiformes": ("Pigeons & doves", "Compact seed- and fruit-eating birds with small heads, short bills and powerful direct flight."),
+    "Gruiformes": ("Cranes & rails", "A diverse order ranging from secretive wetland rails to tall, long-legged cranes."),
+    "Ciconiiformes": ("Storks", "Large wetland birds with long legs, long necks and substantial bills used to capture animal prey."),
+    "Otidiformes": ("Bustards & floricans", "Long-legged birds of open grassland, many of which depend on large, undisturbed habitats."),
     "Charadriiformes": ("Shore & river birds", "A varied order that includes terns, lapwings and specialist river birds."),
     "Accipitriformes": ("Raptors", "Large daytime birds of prey, including eagles and vultures."),
     "Passeriformes": ("Perching birds", "The largest bird order, covering many songbirds and small forest species."),
     "Strigiformes": ("Owls", "Predatory birds adapted for quiet flight and often for low-light activity."),
+    "Trogoniformes": ("Trogons", "Colourful forest birds with compact bodies, broad tails and a distinctive toe arrangement."),
+    "Bucerotiformes": ("Hornbills", "Large forest birds recognised by their long bills, often topped by a casque, and important fruit-eating habits."),
+    "Coraciiformes": ("Kingfishers & allies", "Often vividly coloured birds with strong bills, including species associated with forest and water."),
+    "Piciformes": ("Woodpeckers & barbets", "Mostly tree-associated birds; many have strong bills and feet adapted for climbing or gripping."),
+    "Falconiformes": ("Falcons", "Fast-flying raptors with pointed wings, hooked bills and strong talons."),
+    "Psittaciformes": ("Parrots", "Social birds with strong curved bills and grasping feet, often associated with woodland and forest."),
 }
 
 

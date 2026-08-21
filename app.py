@@ -5,12 +5,23 @@ import io
 from pathlib import Path
 
 import streamlit as st
-from PIL import Image, UnidentifiedImageError
+from PIL import Image, ImageOps, UnidentifiedImageError
 
-from bird_guide import render_bird_guide
+try:
+    import pillow_heif
+
+    pillow_heif.register_heif_opener()
+    if hasattr(pillow_heif, "register_avif_opener"):
+        pillow_heif.register_avif_opener()
+    HEIF_SUPPORT = True
+except ImportError:
+    HEIF_SUPPORT = False
+
+from bird_guide import fetch_commons_photo, render_bird_guide
 from model_utils import (
     MODEL_PATH,
     build_and_load_model,
+    centre_focus_crop,
     load_class_names,
     make_gradcam_images,
     predict_top_k,
@@ -53,6 +64,70 @@ def clear_identification():
 
 def navigate(section):
     st.session_state.site_page = section
+
+
+def open_uploaded_image(image_bytes):
+    """Decode supported formats, respect phone orientation and return RGB."""
+    image = Image.open(io.BytesIO(image_bytes))
+    image.seek(0)
+    image.load()
+    image = ImageOps.exif_transpose(image)
+    if image.width * image.height > 50_000_000:
+        raise ValueError("The image is too large. Please use a photo under 50 megapixels.")
+    return image.convert("RGB")
+
+
+def prediction_photo_card(rank, result):
+    _, common_name, scientific_name = split_class_name(result["raw_name"])
+    photo = fetch_commons_photo(scientific_name, common_name)
+    confidence = result["confidence"] * 100
+    rank_label = "Top match" if rank == 1 else f"Alternative {rank}"
+    card_class = "prediction-card prediction-card-best" if rank == 1 else "prediction-card"
+
+    if photo and photo.get("url"):
+        source_url = html.escape(photo.get("source_url") or photo.get("licence_url") or "#", quote=True)
+        image_html = (
+            f'<a class="prediction-photo-link" href="{source_url}" target="_blank" rel="noopener">'
+            f'<img class="prediction-photo" src="{html.escape(photo["url"], quote=True)}" '
+            f'alt="{html.escape(common_name)}"></a>'
+        )
+        credit_html = (
+            f'<a href="{source_url}" target="_blank" rel="noopener">'
+            f'{html.escape(photo["artist"])} · {html.escape(photo["licence"])}</a>'
+        )
+    else:
+        image_html = '<div class="prediction-photo prediction-photo-empty"><span>Photo unavailable</span></div>'
+        credit_html = "Wikimedia Commons photo unavailable"
+
+    return f"""
+      <article class="{card_class}">
+        <div class="prediction-image-wrap">{image_html}<span class="rank-chip">{rank_label}</span></div>
+        <div class="prediction-body">
+          <div class="prediction-confidence">{confidence:.1f}% model score</div>
+          <h3>{html.escape(common_name)}</h3>
+          <div class="prediction-latin">{html.escape(scientific_name)}</div>
+          <div class="prediction-credit">Photo: {credit_html}</div>
+        </div>
+      </article>
+    """
+
+
+def contributor_card(name, role, initials, image_stem):
+    image_path = next(
+        (path for suffix in (".webp", ".jpg", ".jpeg", ".png")
+         if (path := APP_DIR / "assets" / "contributors" / f"{image_stem}{suffix}").exists()),
+        None,
+    )
+    if image_path:
+        mime = "image/jpeg" if image_path.suffix.lower() in {".jpg", ".jpeg"} else f"image/{image_path.suffix.lower()[1:]}"
+        image_data = base64.b64encode(image_path.read_bytes()).decode("ascii")
+        portrait = f'<img src="data:{mime};base64,{image_data}" alt="{html.escape(name)}">'
+    else:
+        portrait = f'<div class="contributor-placeholder">{html.escape(initials)}</div>'
+    return (
+        f'<article class="contributor-card"><div class="contributor-portrait">{portrait}</div>'
+        f'<h3>{html.escape(name)}</h3><p>{html.escape(role)}</p></article>'
+    )
 
 
 def footer():
@@ -171,6 +246,23 @@ st.markdown(
     .alt-name {{font-weight:790; color:var(--ink); font-size:.86rem;}}
     .alt-latin {{display:block; font-style:italic; color:var(--muted); font-size:.73rem; margin-top:.12rem;}}
     .alt-score {{color:var(--pine-800); font-size:.8rem; font-weight:820;}}
+    .prediction-grid {{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.8rem; margin:.75rem 0 1rem;}}
+    .prediction-card {{overflow:hidden; background:white; border:1px solid var(--line); border-radius:17px; box-shadow:0 9px 25px rgba(12,53,40,.06); transition:transform .2s ease,box-shadow .2s ease;}}
+    .prediction-card:hover {{transform:translateY(-3px); box-shadow:0 14px 30px rgba(12,53,40,.1);}}
+    .prediction-card-best {{border-color:#9fc6a4; box-shadow:0 12px 30px rgba(44,116,61,.12);}}
+    .prediction-image-wrap {{height:180px; position:relative; overflow:hidden; background:#e8efea;}}
+    .prediction-photo-link {{display:block; width:100%; height:100%;}}
+    .prediction-photo {{display:block; width:100%; height:100%; object-fit:cover; border-radius:0 !important; transition:transform .35s ease;}}
+    .prediction-card:hover .prediction-photo {{transform:scale(1.025);}}
+    .prediction-photo-empty {{display:grid; place-items:center; color:#6c7d74; font-size:.72rem;}}
+    .rank-chip {{position:absolute; top:.65rem; left:.65rem; padding:.27rem .5rem; border-radius:999px; background:rgba(6,45,35,.9); color:white; font-size:.61rem; font-weight:820; letter-spacing:.04em;}}
+    .prediction-body {{padding:.9rem;}}
+    .prediction-confidence {{color:var(--leaf); font-size:.67rem; font-weight:850; letter-spacing:.04em; text-transform:uppercase;}}
+    .prediction-body h3 {{font-size:1rem; line-height:1.15; margin:.35rem 0 .15rem;}}
+    .prediction-latin {{font-size:.72rem; color:var(--muted); font-style:italic; min-height:2.1em;}}
+    .prediction-credit {{font-size:.57rem; color:#829088; margin-top:.62rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}}
+    .prediction-credit a {{color:inherit; text-decoration:none;}}
+    .prediction-credit a:hover {{text-decoration:underline;}}
     [data-testid="stProgress"] {{margin-bottom:.55rem;}}
     [data-testid="stProgress"] > div > div > div > div {{background-color:var(--leaf);}}
     .notice {{background:#edf4ed; border:1px solid #d9e7d9; border-radius:13px; padding:.82rem .9rem; color:#435a4f; font-size:.78rem; line-height:1.48;}}
@@ -180,6 +272,11 @@ st.markdown(
     .eco-card .line-icon {{margin-bottom:.75rem;}}
     .eco-card h3 {{font-size:.93rem; margin:0 0 .25rem;}}
     .eco-card p {{font-size:.75rem; color:var(--muted); margin:0; line-height:1.48;}}
+    .detail-grid {{display:grid; grid-template-columns:repeat(3,1fr); gap:.65rem; margin:.8rem 0 1rem;}}
+    .detail-card {{background:white; border:1px solid var(--line); border-radius:14px; padding:.85rem;}}
+    .detail-card span {{display:block; color:var(--leaf); font-size:.61rem; font-weight:850; letter-spacing:.08em; text-transform:uppercase;}}
+    .detail-card strong {{display:block; color:var(--ink); font-size:.82rem; margin:.28rem 0 .18rem;}}
+    .detail-card small {{display:block; color:var(--muted); font-size:.66rem; line-height:1.4;}}
     [data-testid="stMetric"] {{background:white; border:1px solid var(--line); border-radius:14px; padding:.75rem .9rem;}}
     .profile-card {{background:var(--pine-900); color:white; padding:1.2rem; border-radius:18px;}}
     .taxonomy {{display:flex; justify-content:space-between; gap:1rem; border-top:1px solid rgba(255,255,255,.14); padding:.58rem 0; font-size:.79rem;}}
@@ -196,6 +293,17 @@ st.markdown(
     .species-order {{color:#728279; font-size:.61rem;}} .mini-threat {{background:#ffebcb; color:#77470e; border-radius:999px; padding:.17rem .36rem; font-size:.61rem; font-weight:850;}}
     .purpose-panel {{background:var(--pine-900); color:white; border-radius:20px; padding:1.5rem; margin-top:.8rem;}}
     .purpose-panel h2,.purpose-panel h3 {{color:white;}} .purpose-panel p {{color:#d5e1dc;}}
+    .mission-statement {{max-width:720px; font-size:1.02rem; color:#d5e1dc;}}
+    .mission-number {{display:block; color:#b9dd83; font-size:2rem; font-weight:870; line-height:1; margin-bottom:.35rem;}}
+    .contributor-grid {{display:grid; grid-template-columns:repeat(3,1fr); gap:.75rem; margin:.9rem 0 1rem;}}
+    .contributor-card {{background:white; border:1px solid var(--line); border-radius:17px; padding:1rem; text-align:center;}}
+    .contributor-portrait {{width:96px; height:96px; margin:0 auto .75rem; border-radius:50%; overflow:hidden; background:#e7f1e8; border:4px solid #f1f6f1; box-shadow:0 5px 16px rgba(11,59,46,.1);}}
+    .contributor-portrait img {{width:100%; height:100%; object-fit:cover;}}
+    .contributor-placeholder {{width:100%; height:100%; display:grid; place-items:center; background:linear-gradient(145deg,var(--pine-800),var(--leaf)); color:white; font-size:1.35rem; font-weight:850;}}
+    .contributor-card h3 {{font-size:.92rem; margin:.15rem 0 .2rem;}}
+    .contributor-card p {{font-size:.69rem; color:var(--muted); margin:0; line-height:1.45;}}
+    .source-strip {{margin-top:.8rem; padding:.8rem .9rem; border:1px solid var(--line); border-radius:13px; background:#fbfcfa; color:var(--muted); font-size:.68rem; line-height:1.5;}}
+    .source-strip a {{color:var(--pine-800); font-weight:750;}}
     .site-footer {{display:flex; justify-content:space-between; gap:1rem; align-items:flex-end; border-top:1px solid var(--line); margin-top:2.5rem; padding:1.2rem 0 .4rem; color:var(--muted); font-size:.72rem;}}
     .site-footer strong {{color:var(--pine-900); font-size:.82rem;}} .footer-note-right {{text-align:right;}}
 
@@ -221,7 +329,8 @@ st.markdown(
       .st-key-site_nav .stButton > button svg {{display:block; width:1.05rem; height:1.05rem;}}
       .st-key-site_nav .stButton > button[kind="primary"] {{background:var(--pine-900); color:white; box-shadow:none;}}
       .section-head {{margin:1.75rem 0 .85rem;}} .section-head h2 {{font-size:1.85rem;}}
-      .tip-grid,.eco-grid,.species-list {{grid-template-columns:1fr;}}
+      .tip-grid,.eco-grid,.species-list,.prediction-grid,.detail-grid,.contributor-grid {{grid-template-columns:1fr;}}
+      .prediction-image-wrap {{height:220px;}}
       [data-testid="stHorizontalBlock"] {{flex-direction:column; gap:.45rem;}}
       [data-testid="column"] {{width:100% !important; flex:1 1 100% !important;}}
       .result-card {{grid-template-columns:1fr;}} .score-block {{text-align:left; padding:.75rem 0 0; border-left:0; border-top:1px solid rgba(255,255,255,.15);}}
@@ -293,24 +402,37 @@ if page == "Explore":
 
 if page == "Mission":
     st.markdown(
-        """
+        f"""
         <div class="section-head compact-head">
-          <div class="section-kicker">Technology with a reason</div>
-          <h2>Recognition can begin a relationship</h2>
-          <p>This project makes ecological AI approachable without pretending that software can replace field knowledge.</p>
+          <div class="section-kicker">AI in service of ecology</div>
+          <h2>Make every identification a reason to care</h2>
+          <p>Nepal Bird ID connects computer vision, ecological learning and responsible observation in one public tool.</p>
         </div>
         <div class="purpose-panel">
-          <div class="result-label">Our purpose</div>
-          <h2>From a photograph to deeper attention</h2>
-          <p>The research behind this prototype studied fine-grained classification across 85 bird species and used explainable AI to make model attention visible. The website turns that technical work into a simple public learning experience.</p>
-          <h3>Learn a name. Notice a habitat. Share responsibility.</h3>
-          <p>A useful result should encourage observation—not end it.</p>
+          <div class="result-label">Why this contribution matters</div>
+          <h2>Technology should return attention to nature</h2>
+          <p class="mission-statement">Birds move through forests, farms, rivers, wetlands and cities. They disperse seeds, pollinate plants, regulate insects, recycle nutrients and reveal changes in living landscapes. Recognising a bird can be the first step toward noticing the ecosystem that supports it.</p>
+          <h3>Identify carefully. Learn openly. Observe responsibly.</h3>
+          <p>This project does not replace ornithologists or field evidence. It makes a research model understandable, shows uncertainty, and uses Grad-CAM to expose where the model concentrated its attention.</p>
         </div>
         <div class="eco-grid">
-          <div class="eco-card"><div class="line-icon"><svg viewBox="0 0 24 24"><path d="M3 11a8 8 0 0 1 15-4l3 4-3 4a8 8 0 0 1-15-4Z"/><circle cx="11" cy="11" r="2"/></svg></div><h3>Transparent</h3><p>Alternatives, limitations and Grad-CAM keep uncertainty visible.</p></div>
-          <div class="eco-card"><div class="line-icon"><svg viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M10 18h4"/></svg></div><h3>Accessible</h3><p>A mobile-first experience brings ecological learning closer to everyday life.</p></div>
-          <div class="eco-card"><div class="line-icon"><svg viewBox="0 0 24 24"><path d="M12 21c5-3 8-7 8-12-4 0-7-2-8-6-1 4-4 6-8 6 0 5 3 9 8 12Z"/><path d="M12 8v8M8.5 12H12"/></svg></div><h3>Responsible</h3><p>Conservation decisions still require current data and expert verification.</p></div>
+          <div class="eco-card"><span class="mission-number">85</span><h3>Fine-grained classes</h3><p>A focused model library turns a technical ecology study into an approachable public experience.</p></div>
+          <div class="eco-card"><span class="mission-number">3</span><h3>Comparable suggestions</h3><p>Showing alternatives discourages blind trust in a single label and supports closer visual comparison.</p></div>
+          <div class="eco-card"><span class="mission-number">1</span><h3>Shared responsibility</h3><p>AI can support awareness; protection still depends on people, evidence and sustained conservation work.</p></div>
         </div>
+
+        <div class="section-head">
+          <div class="section-kicker">People behind the work</div>
+          <h2>Contributors</h2>
+          <p>Research, product development and academic guidance brought this ecological learning prototype together.</p>
+        </div>
+        <div class="contributor-grid">
+          {contributor_card('Prajwol Karki', 'MS Knowledge Engineering · IOE Pulchowk', 'PK', 'prajwol-karki')}
+          {contributor_card('Utsav Phuyal', 'Master’s in Business and Economics · KUSOM', 'UP', 'utsav-phuyal')}
+          {contributor_card('Bibha SSS', 'Thesis Supervisor · IOE Pulchowk', 'BS', 'bibha-sss')}
+        </div>
+
+        <div class="source-strip"><strong>Evidence and scope:</strong> Nepal-wide figures and threatened-status fields follow the supplied taxonomy report, which describes records through 2022. Ecological-service context is supported by <a href="https://www.birdlife.org/news/2019/01/04/why-we-need-birds-far-more-than-they-need-us/" target="_blank" rel="noopener">BirdLife International</a>. Predictions are educational suggestions, not conservation assessments.</div>
         """,
         unsafe_allow_html=True,
     )
@@ -324,14 +446,14 @@ st.markdown(
       <h2>What did you see?</h2>
       <p>Choose a clear photograph. One visible bird and a simple background usually give the strongest clue.</p>
     </div>
-    <div class="upload-shell"><div><strong>Start with a photograph</strong><span>JPG, PNG or WebP · your image is not added to the training set</span></div><div class="step-chip">Step 1 of 2</div></div>
+    <div class="upload-shell"><div><strong>Start with a photograph</strong><span>JPG, PNG, WebP, HEIC, TIFF or BMP · your image is not added to the training set</span></div><div class="step-chip">Step 1 of 2</div></div>
     """,
     unsafe_allow_html=True,
 )
 
 uploaded_file = st.file_uploader(
     "Upload a bird photograph",
-    type=["jpg", "jpeg", "png", "webp"],
+    type=["jpg", "jpeg", "jfif", "png", "webp", "heic", "heif", "bmp", "tif", "tiff"],
     help="Clear side views with the bird filling the frame usually work best.",
     key=f"bird_upload_{st.session_state.upload_version}",
     label_visibility="collapsed",
@@ -350,22 +472,47 @@ if uploaded_file is None:
     )
 else:
     image_bytes = uploaded_file.getvalue()
-    image_key = hashlib.sha256(image_bytes).hexdigest()
-    if st.session_state.prediction_key != image_key:
-        st.session_state.prediction_key = None
-        st.session_state.prediction_results = None
-        st.session_state.gradcam_key = None
-        st.session_state.gradcam_images = None
-
     try:
-        uploaded_image = Image.open(io.BytesIO(image_bytes))
-        uploaded_image.load()
-    except (UnidentifiedImageError, OSError):
-        st.error("This file could not be read as an image. Try a different JPG, PNG or WebP.")
+        uploaded_image = open_uploaded_image(image_bytes)
+    except (UnidentifiedImageError, OSError, ValueError, Image.DecompressionBombError) as error:
+        st.error(f"This image could not be opened safely. {error}")
+        if uploaded_file.name.lower().endswith((".heic", ".heif")) and not HEIF_SUPPORT:
+            st.info("HEIC support requires the pillow-heif package listed in requirements.txt.")
     else:
+        focus_enabled = st.toggle(
+            "Focus on a centred bird",
+            value=False,
+            help="Optionally crops the outer edges locally. Keep this off when the bird is not near the centre.",
+        )
+        crop_percent = 0
+        if focus_enabled:
+            crop_percent = st.slider(
+                "Focus strength",
+                min_value=5,
+                max_value=30,
+                value=12,
+                step=1,
+                help="Higher values remove more of the outer frame. This is not AI background removal.",
+            )
+            st.caption(
+                "Focus mode keeps your image on this server and avoids a third-party removal API. "
+                "It is optional because the model was trained on normal photographs."
+            )
+
+        inference_image = centre_focus_crop(uploaded_image, crop_percent)
+        image_key = hashlib.sha256(
+            image_bytes + f":centre-crop:{crop_percent}".encode("utf-8")
+        ).hexdigest()
+        if st.session_state.prediction_key != image_key:
+            st.session_state.prediction_key = None
+            st.session_state.prediction_results = None
+            st.session_state.gradcam_key = None
+            st.session_state.gradcam_images = None
+
         photo_col, action_col = st.columns([1.45, 1], gap="medium")
         with photo_col:
-            st.image(uploaded_image, caption="Your observation", use_container_width=True)
+            caption = "Focused preview used for prediction" if focus_enabled else "Your observation"
+            st.image(inference_image, caption=caption, use_container_width=True)
         with action_col:
             st.markdown(
                 """
@@ -387,7 +534,7 @@ else:
                 try:
                     with st.spinner("Comparing shape, colour and texture…"):
                         st.session_state.prediction_results = predict_top_k(
-                            get_model(), uploaded_image, load_class_names(), k=3
+                            get_model(), inference_image, load_class_names(), k=3
                         )
                         st.session_state.prediction_key = image_key
                 except Exception as error:
@@ -398,36 +545,22 @@ else:
         results = st.session_state.prediction_results if st.session_state.prediction_key == image_key else None
         if results:
             best = results[0]
-            _, common_name, scientific_name = split_class_name(best["raw_name"])
             status, note = confidence_details(best["confidence"])
-            confidence_percent = best["confidence"] * 100
 
             st.markdown(
-                '<div class="section-head"><div class="section-kicker">Your result</div><h2>Closest visual match</h2></div>',
+                '<div class="section-head"><div class="section-kicker">Your result</div><h2>Three closest visual matches</h2><p>Compare the bird’s shape, bill, plumage and habitat across all three suggestions.</p></div>',
+                unsafe_allow_html=True,
+            )
+            prediction_cards = "".join(
+                prediction_photo_card(rank, result)
+                for rank, result in enumerate(results, start=1)
+            )
+            st.markdown(
+                f'<div class="prediction-grid">{prediction_cards}</div>',
                 unsafe_allow_html=True,
             )
             st.markdown(
-                f"""
-                <article class="result-card">
-                  <div><div class="result-label">Top suggestion</div><h2>{html.escape(common_name)}</h2><div class="result-latin">{html.escape(scientific_name)}</div></div>
-                  <div class="score-block"><span class="score-number">{confidence_percent:.1f}%</span><span class="score-status">{status}</span></div>
-                  <div class="score-note">{note} This is a model score, not a guaranteed real-world probability.</div>
-                </article>
-                """,
-                unsafe_allow_html=True,
-            )
-
-            st.markdown("#### Also compare")
-            for result in results[1:]:
-                _, other_common, other_scientific = split_class_name(result["raw_name"])
-                st.markdown(
-                    f'<div class="alt-card"><div><span class="alt-name">{html.escape(other_common)}</span><span class="alt-latin">{html.escape(other_scientific)}</span></div><span class="alt-score">{result["confidence"] * 100:.1f}%</span></div>',
-                    unsafe_allow_html=True,
-                )
-                st.progress(result["confidence"])
-
-            st.markdown(
-                '<div class="notice"><strong>Keep field judgment in the loop.</strong> The model must choose among 85 classes, even for an unsupported species or a non-bird image.</div>',
+                f'<div class="notice"><strong>{status}.</strong> {html.escape(note)} Scores compare only the model’s 85 trained classes; they are not guaranteed real-world probabilities. The model will still return a result for an unsupported species or non-bird image.</div>',
                 unsafe_allow_html=True,
             )
 
@@ -445,7 +578,7 @@ else:
                     try:
                         with st.spinner("Tracing visual attention…"):
                             heatmap, overlay, _ = make_gradcam_images(
-                                get_model(), uploaded_image, class_index=best["index"]
+                                get_model(), inference_image, class_index=best["index"]
                             )
                             st.session_state.gradcam_images = (heatmap, overlay)
                             st.session_state.gradcam_key = image_key

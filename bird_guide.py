@@ -9,6 +9,7 @@ from model_utils import load_class_names
 
 
 COMMONS_API = "https://commons.wikimedia.org/w/api.php"
+WIKIPEDIA_API = "https://en.wikipedia.org/w/api.php"
 
 
 def _plain_text(value):
@@ -65,6 +66,41 @@ def fetch_commons_photo(scientific_name, common_name):
     return None
 
 
+@st.cache_data(ttl=604800, show_spinner=False)
+def fetch_species_description(scientific_name, common_name):
+    """Return an attributed introductory species account from Wikipedia."""
+    headers = {"User-Agent": "NepalBirdID/1.0 (educational biodiversity prototype)"}
+    for title in (scientific_name, common_name):
+        params = {
+            "action": "query",
+            "prop": "extracts|info",
+            "titles": title,
+            "redirects": 1,
+            "exintro": 1,
+            "explaintext": 1,
+            "exchars": 900,
+            "inprop": "url",
+            "format": "json",
+            "formatversion": 2,
+            "origin": "*",
+        }
+        try:
+            response = requests.get(WIKIPEDIA_API, params=params, headers=headers, timeout=8)
+            response.raise_for_status()
+            page = (response.json().get("query", {}).get("pages") or [{}])[0]
+        except (requests.RequestException, ValueError, IndexError):
+            continue
+
+        extract = " ".join((page.get("extract") or "").split())
+        if page.get("missing") is None and len(extract) >= 80:
+            return {
+                "text": extract,
+                "title": page.get("title") or title,
+                "source_url": page.get("fullurl", ""),
+            }
+    return None
+
+
 def _status_pill(code, label):
     css_class = f"status-{code.lower()}" if code != "-" else "status-none"
     visible = code if code != "-" else "—"
@@ -117,6 +153,7 @@ def render_bird_guide():
     )
     bird = next(item for item in filtered if item["common_name"] == selected_name)
     photo = fetch_commons_photo(bird["scientific_name"], bird["common_name"])
+    description = fetch_species_description(bird["scientific_name"], bird["common_name"])
 
     image_col, detail_col = st.columns([1.25, 1], gap="large")
     with image_col:
@@ -155,8 +192,31 @@ def render_bird_guide():
         st.markdown(f"**{story[0]}**")
         st.write(story[1])
 
+    st.markdown("#### Species overview")
+    if description:
+        st.write(description["text"])
+        if description.get("source_url"):
+            st.caption(
+                f"Introductory account: [{description['title']}]({description['source_url']}) on Wikipedia · CC BY-SA"
+            )
+    else:
+        st.info(
+            "A species-level account could not be loaded right now. The taxonomy and order-level traits above remain available."
+        )
+
     st.markdown(
-        '<div class="notice"><strong>Status note:</strong> Global and Nepal fields reproduce the project report’s table based on its cited 2022 checklist. “—” only means the species was not marked VU, EN or CR in that table. Always verify a current authoritative list before conservation use.</div>',
+        f"""
+        <div class="detail-grid">
+          <div class="detail-card"><span>Classification</span><strong>{html.escape(bird['order'])}</strong><small>{html.escape(bird['family'])}</small></div>
+          <div class="detail-card"><span>Scientific name</span><strong><em>{html.escape(bird['scientific_name'])}</em></strong><small>Use this name when checking other field guides.</small></div>
+          <div class="detail-card"><span>Model scope</span><strong>1 of 85 classes</strong><small>The classifier cannot identify species outside its trained library.</small></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    st.markdown(
+        '<div class="notice"><strong>Status note:</strong> Global and Nepal fields reproduce the supplied project taxonomy report, which describes records through 2022. “—” only means the species was not marked VU, EN or CR in that table. Always verify the current IUCN Red List and Nepal national list before conservation use.</div>',
         unsafe_allow_html=True,
     )
 

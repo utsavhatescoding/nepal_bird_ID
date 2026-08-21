@@ -37,6 +37,21 @@ def prepare_image(image):
     return np.expand_dims(array, axis=0)
 
 
+def centre_focus_crop(image, crop_percent=12):
+    """Crop equal margins to enlarge a centred subject without external APIs."""
+    image = ImageOps.exif_transpose(image).convert("RGB")
+    crop_percent = max(0, min(int(crop_percent), 35))
+    if crop_percent == 0:
+        return image
+
+    width, height = image.size
+    margin_x = int(width * crop_percent / 100)
+    margin_y = int(height * crop_percent / 100)
+    if width - (2 * margin_x) < 32 or height - (2 * margin_y) < 32:
+        return image
+    return image.crop((margin_x, margin_y, width - margin_x, height - margin_y))
+
+
 def build_and_load_model(model_path=MODEL_PATH, num_classes=85):
     """Rebuild the exact notebook architecture and load its H5 weights."""
     import tensorflow as tf
@@ -105,7 +120,7 @@ def _colourise_heatmap(heatmap):
 
 
 def make_gradcam_images(model, image, class_index=None, max_display_size=1200):
-    """Return a Grad-CAM heatmap and an overlay for one predicted class."""
+    """Return a Grad-CAM heatmap and overlay for one predicted class."""
     import tensorflow as tf
 
     batch = prepare_image(image)
@@ -144,7 +159,6 @@ def make_gradcam_images(model, image, class_index=None, max_display_size=1200):
     resized_array = np.asarray(resized, dtype=np.float32) / 255.0
     coloured = Image.fromarray(_colourise_heatmap(resized_array), mode="RGB")
 
-    # Low activations remain transparent so the highlighted evidence is legible.
     mask = Image.fromarray(
         np.clip(resized_array * 190, 0, 190).astype(np.uint8),
         mode="L",

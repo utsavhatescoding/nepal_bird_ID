@@ -173,7 +173,7 @@ st.markdown(
     header[data-testid="stHeader"] {{height:0; background:transparent;}}
     #MainMenu, footer, [data-testid="stToolbar"], [data-testid="stDecoration"],
     [data-testid="stStatusWidget"], [data-testid="stSidebarCollapsedControl"],
-    [data-testid="stLogo"], img[alt="streamlitApp"] {{display:none !important;}}
+    [data-testid="stLogo"],[aria-label="streamlitApp"],img[alt="streamlitApp"] { display: none !important;}
     h1,h2,h3 {{color:var(--ink); letter-spacing:-.035em;}}
     p {{line-height:1.58;}}
 
@@ -552,9 +552,9 @@ else:
                 unsafe_allow_html=True,
             )
             prediction_cards = "".join(
-                prediction_photo_card(rank, result)
-                for rank, result in enumerate(results, start=1)
-            )
+                 prediction_photo_card(rank, result).strip()
+                   for rank, result in enumerate(results, start=1)
+                   )
             st.markdown(
                 f'<div class="prediction-grid">{prediction_cards}</div>',
                 unsafe_allow_html=True,

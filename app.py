@@ -173,7 +173,7 @@ st.markdown(
     header[data-testid="stHeader"] {{height:0; background:transparent;}}
     #MainMenu, footer, [data-testid="stToolbar"], [data-testid="stDecoration"],
     [data-testid="stStatusWidget"], [data-testid="stSidebarCollapsedControl"],
-    [data-testid="stLogo"],[aria-label="streamlitApp"],img[alt="streamlitApp"] { display: none !important;}
+    [data-testid="stLogo"],[aria-label="streamlitApp"],img[alt="streamlitApp"] {{ display: none !important;}}
     h1,h2,h3 {{color:var(--ink); letter-spacing:-.035em;}}
     p {{line-height:1.58;}}
 

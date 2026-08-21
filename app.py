@@ -495,8 +495,7 @@ else:
                 help="Higher values remove more of the outer frame. This is not AI background removal.",
             )
             st.caption(
-                "Focus mode keeps your image on this server and avoids a third-party removal API. "
-                "It is optional because the model was trained on normal photographs."
+                "Optional"
             )
 
         inference_image = centre_focus_crop(uploaded_image, crop_percent)
